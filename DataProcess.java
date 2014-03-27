@@ -1,34 +1,22 @@
-package stockData;
-
-import java.awt.image.RescaleOp;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.math.BigInteger;
-import java.security.PublicKey;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Hashtable;
-
-import javax.print.attribute.Size2DSyntax;
-import javax.sound.sampled.Line;
+import java.util.HashMap;
 
 public class DataProcess {
 	String cdir;    // path for storing the data file and outputs.
 	String fileName;
 	String referName;
-	Hashtable content;
+	HashMap<String, ArrayList<ArrayList<String>>> content;
 	ArrayList<String> indexArrayList;
 	ArrayList<String> selectArrayList;
 
 	public DataProcess(String dir, String name,String refer) throws IOException {
-		// TODO Auto-generated constructor stub
 		this.cdir = dir;
 		this.fileName = name;
 		this.referName = refer;
@@ -48,84 +36,56 @@ public class DataProcess {
 	 * If the seven subarrays are not in the same length, the function will return error information 
 	 * to remind you.
 	 */
-	public ArrayList<String> referenceIndex() throws IOException{
+	public ArrayList<String> referenceIndex() throws IOException {
 		ArrayList<String> ref = new ArrayList<String>();
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(this.cdir+this.referName)));
 		String line = br.readLine();
-		while(line!=null){
+		while(line!=null) {
 			ref.add(line);
 			line = br.readLine();
 		}
 		br.close();
 		return ref;
 	}
-	public Hashtable constructHash() {
-		this.content = new Hashtable();
-			BufferedReader br = null;
-			try {
-				br = new BufferedReader(new InputStreamReader(new FileInputStream(this.cdir+this.fileName)));
-			} catch (FileNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+	
+	public HashMap<String, ArrayList<ArrayList<String>>> constructHash() throws IOException{
+		this.content = new HashMap<String, ArrayList<ArrayList<String>>>();
+		BufferedReader br = null;
+		br = new BufferedReader(new InputStreamReader(new FileInputStream(this.cdir+this.fileName)));
+		String line=null;
+		line = br.readLine();
+		while (line != null) {
+			String[] cont = line.split("\t");
+			if(cont.length==8 && Double.parseDouble(cont[6])>0 && Double.parseDouble(cont[7]) >= 100 ){
+				/*
+				 * ”√≥…Ωª¡ø∫Õ≥…ΩªΩ∂Ó»•≥˝¥ÌŒÛ ˝æ›
+				 */
+				if (this.content.containsKey(cont[0]) == false) {
+					this.indexArrayList.add(cont[0]);
+					ArrayList<ArrayList<String>> arr = new ArrayList<ArrayList<String>>(); 
+					for (int i = 0; i < 7; ++i) {
+						ArrayList<String> list = new ArrayList<String>();
+						list.add(cont[i + 1]);
+						arr.add(list);
+					}
+					this.content.put(cont[0], arr);
+				} else {
+					ArrayList<ArrayList<String>> temp = this.content.get(cont[0]);
+					for (int i = 0; i < 7; ++i) {
+						ArrayList<String> sub = temp.get(i);
+						sub.add(cont[i + 1]);
+						temp.set(i, sub);
+					}
+					this.content.remove(cont[0]);
+					this.content.put(cont[0], temp);
+				}
+				line = br.readLine();
+			} else{
+				line = br.readLine();
 			}
-				String line=null;
-				try {
-					line = br.readLine();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				while (line != null) {
-					String[] cont = line.split("\t");
-					if(cont.length==8 && Double.parseDouble(cont[6])>0 && Double.parseDouble(cont[7]) >= 100 ){
-						/*
-						 * Áî®Êàê‰∫§ÈáèÂíåÊàê‰∫§ÈáëÈ¢ùÂéªÈô§ÈîôËØØÊï∞ÊçÆ
-						 */
-						if (this.content.containsKey(cont[0]) == false) {
-							this.indexArrayList.add(cont[0]);
-							ArrayList arr = new ArrayList(); 
-							for (int i = 0; i < 7; ++i) {
-								ArrayList list = new ArrayList();
-								list.add(cont[i + 1]);
-								arr.add(list);
-							}
-							this.content.put(cont[0], arr);
-						
-					} else {
-						ArrayList temp = (ArrayList) this.content.get(cont[0]);
-						for (int i = 0; i < 7; ++i) {
-							ArrayList sub = (ArrayList) temp.get(i);
-							sub.add(cont[i + 1]);
-							temp.set(i, sub);
-						
-						}
-						this.content.remove(cont[0]);
-						this.content.put(cont[0], temp);
-					}
-					try {
-						line = br.readLine();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-					else{
-						try {
-							line = br.readLine();
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-				}
-					
-			
-		try {
-			br.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
+
+		br.close();
 		System.out.println("Finish constructing hashtable!");
 		return this.content;
 	}
@@ -137,36 +97,34 @@ public class DataProcess {
 	 * 
 	 * n1 in our case is 15 days, and n2 is 10. That means we use the data of the first 10 days.
 	 */
-	public ArrayList<String> getWilliamIndex(Integer n){
-		ArrayList<String> str = new ArrayList();
-
+	public ArrayList<String> getWilliamIndex(Integer n) {
+		ArrayList<String> str = new ArrayList<String>();
 		for(String key:this.indexArrayList){
-			if(this.selectArrayList.contains(key)){
-			ArrayList cont = (ArrayList) this.content.get(key);
-			int len = ((ArrayList) cont.get(0)).size();
-			for(int j=26;j<len;++j){
-				Double max = 0.0;
-				Double min = 0.0;
-				for(int k=0;k<n;++k){
-					Double item = Double.parseDouble((String)(((ArrayList)cont.get(4)).get(j-k)));
+			if (this.selectArrayList.contains(key)) {
+				ArrayList<ArrayList<String>> cont = this.content.get(key);
+				int len = cont.get(0).size();
+				for(int j=26;j<len;++j) {
+					Double max = 0.0;
+					Double min = 0.0;
+					for(int k=0;k<n;++k){
+						Double item = Double.parseDouble(cont.get(4).get(j-k));
+						/*
+						 * cont.get(4) means to get the price list. 
+						 */
+						if(item > max)
+							max = item;
+						if(item < min)
+							min = item;
+					}
+					Double current = Double.parseDouble(cont.get(4).get(j));
+					Double williamIndex = (max - current) / (max - min) * 100;	
 					/*
-					 * cont.get(4) means to get the price list. 
+					 * the following for loop is to add the source data.
 					 */
-					if(item > max)
-						max = item;
-					if(item < min)
-						min = item;
+					String tem = Double.toString(williamIndex);
+					str.add(tem);
 				}
-				Double current = Double.parseDouble((String)((ArrayList)cont.get(4)).get(j));
-				Double williamIndex = (max - current) / (max - min) * 100;	
-				/*
-				 * the following for loop is to add the source data.
-				 */
-				String tem = Double.toString(williamIndex);
-				str.add(tem);
-			}
-			}
-			else{
+			} else{
 				System.out.println("Stock index not in the selected list!");
 			}
 		}
@@ -187,44 +145,43 @@ public class DataProcess {
 	 */
 	public ArrayList<String> getRSVKDJ(Integer n){
 		ArrayList<String> str = new ArrayList<String>();
-		for(String key : this.indexArrayList){
-			if(this.selectArrayList.contains(key)){
-			ArrayList cont = (ArrayList) this.content.get(key);
-			int len = ((ArrayList) cont.get(0)).size();
-			ArrayList kValue = new ArrayList();
-			ArrayList dValue = new ArrayList();
-			for(int j=26;j<len;++j){
-				Double max = 0.0;
-				Double min = 0.0;
-				for(int k=0;k<n;++k){
-					Double item = Double.parseDouble((String)((ArrayList)cont.get(4)).get(j-k));
-					if(item > max)
-						max = item;
-					if(item < min)
-						min = item;
+		for (String key : this.indexArrayList){
+			if (this.selectArrayList.contains(key)){
+				ArrayList<ArrayList<String>> cont = this.content.get(key);
+				int len = (cont.get(0)).size();
+				ArrayList<Double> kValue = new ArrayList<Double>();
+				ArrayList<Double> dValue = new ArrayList<Double>();
+				for(int j=26;j<len;++j){
+					Double max = 0.0;
+					Double min = 0.0;
+					for(int k=0;k<n;++k){
+						Double item = Double.parseDouble(cont.get(4).get(j-k));
+						if(item > max)
+							max = item;
+						if(item < min)
+							min = item;
+					}
+					Double current = Double.parseDouble(cont.get(4).get(j));
+					Double RSV= (current - min) / (max - min) * 100;
+					Double k_val = null, d_val = null, j_val = null;
+					if(j>26){
+						k_val = 2/3.0*kValue.get(j-27)+1/3*RSV;
+						d_val = 2/3.0*dValue.get(j-27)+1/3*k_val;	
+						j_val = 3*d_val - 2*k_val;
+						kValue.add(k_val);
+						dValue.add(d_val);
+					}
+					else{
+						k_val = 2/3.0*50.0+1/3*RSV;
+						d_val = 2/3.0*50.0+1/3*k_val;	
+						j_val = 3*d_val - 2*k_val;
+						kValue.add(k_val);
+						dValue.add(d_val);
+					}
+					String tem =Double.toString(k_val)+"\t"+Double.toString(d_val)+"\t"+Double.toString(j_val);
+					str.add(tem);
 				}
-				Double current = Double.parseDouble((String)((ArrayList)cont.get(4)).get(j));
-				Double RSV= (current - min) / (max - min) * 100;
-				Double k_val = null, d_val = null, j_val = null;
-				if(j>26){
-					k_val = 2/3.0*(double)kValue.get(j-27)+1/3*RSV;
-					d_val = 2/3.0*(double)dValue.get(j-27)+1/3*k_val;	
-					j_val = 3*d_val - 2*k_val;
-					kValue.add(k_val);
-					dValue.add(d_val);
-				}
-				else{
-					k_val = 2/3.0*50.0+1/3*RSV;
-					d_val = 2/3.0*50.0+1/3*k_val;	
-					j_val = 3*d_val - 2*k_val;
-					kValue.add(k_val);
-					dValue.add(d_val);
-				}
-				String tem =Double.toString(k_val)+"\t"+Double.toString(d_val)+"\t"+Double.toString(j_val);
-				str.add(tem);
-			}
-		}
-			else{
+			} else{
 				System.out.println("Stock index not in the selected list!");
 			}
 		}
@@ -246,7 +203,6 @@ public class DataProcess {
 		return str;
 	}
 	
-	
 	/*
 	 * get MACD 
 	 * Return EMA12, EMA26, DIF, DEA, MACD
@@ -256,40 +212,39 @@ public class DataProcess {
 		ArrayList<String> str = new ArrayList<String>();
 		for(String key:this.indexArrayList){
 			if(this.selectArrayList.contains(key)){
-			ArrayList cont = (ArrayList) this.content.get(key);
-			int len = ((ArrayList) cont.get(0)).size();
-			ArrayList EMA12 = new ArrayList();
-			ArrayList EMA26 = new ArrayList();
-			ArrayList DEA = new ArrayList();
-			for(int j=26;j<len;++j){
-				Double current = Double.parseDouble((String)((ArrayList)cont.get(4)).get(j)); //price today
-				Double ema12 = null, ema26 = null, dea = null;
-				Double dif = null, macd = null; 
-				if(j>26){
-					ema12 = 2.0/(n1+1)*current + (1-(2.0/(n1+1)))*(double)EMA12.get(j-27);
-					ema26 = 2.0/(n2+1)*current + (1-(2.0/(n2+1)))*(double)EMA26.get(j-27);
-					dif = ema12 - ema26;
-					dea = dif * 0.2 + (double) DEA.get(j-27) * 0.8;
-					macd = 2 * (dif - dea);
-					EMA12.add(ema12);
-					EMA26.add(ema26);
-					DEA.add(dea);
+				ArrayList<ArrayList<String>> cont = this.content.get(key);
+				int len = (cont.get(0)).size();
+				ArrayList<Double> EMA12 = new ArrayList<Double>();
+				ArrayList<Double> EMA26 = new ArrayList<Double>();
+				ArrayList<Double> DEA = new ArrayList<Double>();
+				for(int j=26;j<len;++j){
+					Double current = Double.parseDouble(cont.get(4).get(j)); //price today
+					Double ema12 = null, ema26 = null, dea = null;
+					Double dif = null, macd = null; 
+					if(j>26){
+						ema12 = 2.0/(n1+1)*current + (1-(2.0/(n1+1)))*EMA12.get(j-27);
+						ema26 = 2.0/(n2+1)*current + (1-(2.0/(n2+1)))*EMA26.get(j-27);
+						dif = ema12 - ema26;
+						dea = dif * 0.2 + DEA.get(j-27) * 0.8;
+						macd = 2 * (dif - dea);
+						EMA12.add(ema12);
+						EMA26.add(ema26);
+						DEA.add(dea);
+					}
+					else{
+						ema12 = 2/13.0*current;
+						ema26 = 2/27.0*current;
+						dif = ema12 - ema26;
+						dea = dif * 0.2;
+						macd = 2 * (dif - dea);
+						EMA12.add(ema12);
+						EMA26.add(ema26);
+						DEA.add(dea);
+					}
+					String tem =Double.toString(current)+"\t"+Double.toString(ema12)+"\t"+Double.toString(ema26)+"\t"+Double.toString(dif)+"\t"+Double.toString(dea)+"\t"+Double.toString(macd);
+					str.add(tem);
 				}
-				else{
-					ema12 = 2/13.0*current;
-					ema26 = 2/27.0*current;
-					dif = ema12 - ema26;
-					dea = dif * 0.2;
-					macd = 2 * (dif - dea);
-					EMA12.add(ema12);
-					EMA26.add(ema26);
-					DEA.add(dea);
-				}
-				String tem =Double.toString(current)+"\t"+Double.toString(ema12)+"\t"+Double.toString(ema26)+"\t"+Double.toString(dif)+"\t"+Double.toString(dea)+"\t"+Double.toString(macd);
-				str.add(tem);
-			}
-			}
-			else{
+			} else{
 				System.out.println("Stock index not in the selected list!");
 			}
 		}	
@@ -315,31 +270,31 @@ public class DataProcess {
 	 */
 	public ArrayList<String> getY(int n, double percent){
 		ArrayList<String> str = new ArrayList<String>();
-		for(String key:this.indexArrayList){
-			if(this.selectArrayList.contains(key)){
-			ArrayList cont = (ArrayList) this.content.get(key);
-			int len = ((ArrayList) cont.get(0)).size();
-			for(int j=26;j<len;++j){
-				Double current = Double.parseDouble((String)((ArrayList)cont.get(4)).get(j)); //price today
-				Double previous = Double.parseDouble((String)((ArrayList)cont.get(4)).get(j-n)); //price previous
-				String y = "-1";
-				if(current>previous*(1+percent))
-					y = "1";
-				else if (current<previous*(1-percent)) {
-					y = "0";
-				}
-				String tem = y+"\t"+key +"\t"+ Integer.toString(j)+"\t";
-				for(int m =4;m<=6;++m){
-					Double currentDouble = Double.parseDouble((String)((ArrayList)cont.get(m)).get(j));
-					Double previousDouble = Double.parseDouble((String)((ArrayList)cont.get(m)).get(j-1));
-					tem +=Double.toString(Math.log(currentDouble/previousDouble));
-					if(m<6){
-						tem+="\t";
+		for (String key:this.indexArrayList){
+			if (this.selectArrayList.contains(key)){
+				ArrayList<ArrayList<String>> cont = this.content.get(key);
+				int len = (cont.get(0)).size();
+				for(int j=26;j<len;++j){
+					Double current = Double.parseDouble(cont.get(4).get(j)); //price today
+					Double previous = Double.parseDouble(cont.get(4).get(j-n)); //price previous
+					String y = "-1";
+					if(current>previous*(1+percent))
+						y = "1";
+					else if (current<previous*(1-percent)) {
+						y = "0";
 					}
+					String tem = y+"\t"+key +"\t"+ Integer.toString(j)+"\t";
+					for(int m =4;m<=6;++m){
+						Double currentDouble = Double.parseDouble(cont.get(m).get(j));
+						Double previousDouble = Double.parseDouble(cont.get(m).get(j-1));
+						tem +=Double.toString(Math.log(currentDouble/previousDouble));
+						if(m<6){
+							tem+="\t";
+						}
+					}
+					str.add(tem);
 				}
-				str.add(tem);
 			}
-		}
 			else{
 				System.out.println("Stock index not in the selected list!");
 			}
@@ -347,7 +302,6 @@ public class DataProcess {
 		System.out.println("size of y is "+str.size());
 		return str;
 	}
-	
 	
 	public String getOutput() throws IOException{
 		ArrayList<String> wiliam1 = getWilliamIndex(5);
@@ -357,8 +311,8 @@ public class DataProcess {
 		ArrayList<String> macd = getMACD(12,26);
 		ArrayList<String> yArrayList = getY(5,0);
 		String pathString = this.cdir+"output_2012_5_0_selected.txt";
-		File file = new File(pathString);
-        BufferedWriter output = new BufferedWriter(new FileWriter(file));
+		FileWriter file = new FileWriter(pathString);
+        BufferedWriter output = new BufferedWriter(file);
         //output.write("Y\tStkcd\tIndex\tOpendata\tOpnprc\tHiprc\tLoprc\tClsprc\tDnshrtrd\tDnvaltrd\tWilliamIndex\tRSV\tK\tD\tJ\tEMA12\tEMA26\tDIF\tDEA\tMACD\n");
 		if (wiliam1.size()==kdj.size() && kdj.size() == macd.size()) {
 	        for(int i=0;i<wiliam1.size();++i){
@@ -378,16 +332,15 @@ public class DataProcess {
 		return pathString;
 	}
 	
-	
 	public void getTotalOutput(String path) throws IOException{
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(path)));
 		String line = br.readLine();
-		Hashtable hashtable = new Hashtable<>();
-		ArrayList<String> Index = new ArrayList<>();
+		HashMap<String, ArrayList<String>> hashtable = new HashMap<String, ArrayList<String>>();
+		ArrayList<String> Index = new ArrayList<String>();
 		while(line!=null){
 			String[] contStrings = line.split("\t");
 			if(!hashtable.containsKey(contStrings[1])){
-				ArrayList<String> list = new ArrayList<>();
+				ArrayList<String> list = new ArrayList<String>();
 				String resString = "";
 				for(int i=0;i<contStrings.length;++i){
 					if(i!=1 && i!=2){
@@ -405,19 +358,17 @@ public class DataProcess {
 				Index.add(contStrings[1]);
 			}
 			else{
-				ArrayList<String> list = (ArrayList<String>) hashtable.get(contStrings[1]);
+				ArrayList<String> list = hashtable.get(contStrings[1]);
 				String resString = "";
 				for(int i=0;i<contStrings.length;++i){
 					if(i!=1 && i!=2){
 						resString+=contStrings[i];
 						if(i==0){
 							resString+=",";
-						}
-						else {
-							
-						if(i<contStrings.length-1){
-							resString+="\t";
-						}
+						} else {
+							if(i<contStrings.length-1){
+								resString+="\t";
+							}
 						}
 					}
 				}
@@ -433,7 +384,7 @@ public class DataProcess {
 		File file = new File(pathString);
         BufferedWriter output = new BufferedWriter(new FileWriter(file));
 		for(String key:Index){
-			ArrayList<String> listStrings = (ArrayList<String>)hashtable.get(key);
+			ArrayList<String> listStrings = hashtable.get(key);
 			if(listStrings.size()>=15){
 				for(int i=14;i<listStrings.size();++i){
 					String[] strings = listStrings.get(i).split(",");
