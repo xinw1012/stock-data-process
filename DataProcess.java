@@ -54,14 +54,11 @@ public class DataProcess {
 		br = new BufferedReader(new InputStreamReader(new FileInputStream(this.cdir+this.fileName)));
 		String line=null;
 		line = br.readLine();
-		int count=0;
 		while (line != null) {
-			count++;
-			System.out.print(""+count+"\n");
 			String[] cont = line.split("\t");
 			if(cont.length==8 && Double.parseDouble(cont[6])>0 && Double.parseDouble(cont[7]) >= 100 ){
 				/*
-				 * 用成交量和成交金额去除错误数据
+				 * Remove False Data
 				 */
 				if (this.content.containsKey(cont[0]) == false) {
 					this.indexArrayList.add(cont[0]);
@@ -128,12 +125,6 @@ public class DataProcess {
 				System.out.println("Stock index not in the selected list!");
 			}
 		}
-		/*
-		for(int i=0;i<str.size();++i){
-			Double temp = Double.parseDouble(str.get(i));
-			temp -= 50;
-			str.set(i, Double.toString(temp));
-		}*/
 		System.out.println("size of william is "+str.size());
 		return str;
 	}
@@ -185,85 +176,45 @@ public class DataProcess {
 				System.out.println("Stock index not in the selected list!");
 			}
 		}
-		/*
-		for(int i=0;i<str.size();++i){
-			String[] contStrings = str.get(i).split("\t");
-			String resString = "";
-			for(int j=0;j<3;++j){
-				Double temp = Double.parseDouble(contStrings[j]);
-				temp-=50;
-				resString+=Double.toString(temp);
-				if(j<2){
-					resString+="\t";
-				}
-			}
-			str.set(i, resString);
-		}*/
 		System.out.println("size of kdj is "+str.size());
 		return str;
 	}
 	
 	/*
-	 * get MACD 
-	 * Return EMA12, EMA26, DIF, DEA, MACD
-	 * 
+	 * getMA
 	 */
-	public ArrayList<String> getMACD(Integer n1, Integer n2){
-		ArrayList<String> str = new ArrayList<String>();
+	public ArrayList<String> getMA(int duration1, int duration2) {
+		ArrayList<String> MA = new ArrayList<String>();
+		int j = 0;
+		int k = 0;
 		for(String key:this.indexArrayList){
-			if(this.selectArrayList.contains(key)){
+			if(this.selectArrayList.contains(key)) {
 				ArrayList<ArrayList<String>> cont = this.content.get(key);
 				int len = (cont.get(0)).size();
-				ArrayList<Double> EMA12 = new ArrayList<Double>();
-				ArrayList<Double> EMA26 = new ArrayList<Double>();
-				ArrayList<Double> DEA = new ArrayList<Double>();
-				for(int j=26;j<len;++j){
-					Double current = Double.parseDouble(cont.get(4).get(j)); //price today
-					Double ema12 = null, ema26 = null, dea = null;
-					Double dif = null, macd = null; 
-					if(j>26){
-						ema12 = 2.0/(n1+1)*current + (1-(2.0/(n1+1)))*EMA12.get(j-27);
-						ema26 = 2.0/(n2+1)*current + (1-(2.0/(n2+1)))*EMA26.get(j-27);
-						dif = ema12 - ema26;
-						dea = dif * 0.2 + DEA.get(j-27) * 0.8;
-						macd = 2 * (dif - dea);
-						EMA12.add(ema12);
-						EMA26.add(ema26);
-						DEA.add(dea);
+				double ma1 = 0;
+				double ma2 = 0;
+				for(j = 26; j < len; ++j) {
+					double current = Double.parseDouble(cont.get(5).get(j)); //price today
+					double average = 0;
+					for(k = 0; k < duration1; k++) {
+						average += Double.parseDouble(cont.get(5).get(j-k));
 					}
-					else{
-						ema12 = 2/13.0*current;
-						ema26 = 2/27.0*current;
-						dif = ema12 - ema26;
-						dea = dif * 0.2;
-						macd = 2 * (dif - dea);
-						EMA12.add(ema12);
-						EMA26.add(ema26);
-						DEA.add(dea);
+					average = average / (double)duration1;
+					ma1 = Math.log(current/average);
+					for(k = 0; k < duration2; k++) {
+						average += Double.parseDouble(cont.get(5).get(j-k));
 					}
-					String tem =Double.toString(current)+"\t"+Double.toString(ema12)+"\t"+Double.toString(ema26)
-							+"\t"+Double.toString(dif)+"\t"+Double.toString(dea)+"\t"+Double.toString(macd);
-					str.add(tem);
+					average = average / (double)duration2;
+					ma2 = Math.log(current/average);
+					
+					String tem = Double.toString(ma1)+"\t"+Double.toString(ma2);
+					MA.add(tem);
 				}
 			} else{
 				System.out.println("Stock index not in the selected list!");
 			}
-		}	
-		System.out.println("size of macd is "+str.size());
-		for(int i=0;i<str.size();++i){
-			String[] contStrings = str.get(i).split("\t");
-			String resString = "";
-			for(int j=1;j<6;++j){
-				Double temp = Double.parseDouble(contStrings[j]);
-				temp = Math.log(temp/(Double.parseDouble(contStrings[0])));
-				resString+=Double.toString(temp);
-				if(j<5){
-					resString+="\t";
-				}
-			}
-			str.set(i, resString);
 		}
-		return str;
+		return MA;
 	}
 	
 	/*
@@ -309,17 +260,17 @@ public class DataProcess {
 		ArrayList<String> wiliam2 = getWilliamIndex(14);
 		ArrayList<String> wiliam3 = getWilliamIndex(20);
 		ArrayList<String> kdj = getRSVKDJ(5);
-		ArrayList<String> macd = getMACD(12,26);
+		ArrayList<String> ma = getMA(5,10);
 		ArrayList<String> yArrayList = getY(5,0);
 		String pathString = this.cdir+"output_2012_5_0_selected.txt";
 		FileWriter file = new FileWriter(pathString);
         BufferedWriter output = new BufferedWriter(file);
         //output.write("Y\tStkcd\tIndex\tOpendata\tOpnprc\tHiprc\tLoprc\tClsprc\tDnshrtrd\tDnvaltrd
         //\tWilliamIndex\tRSV\tK\tD\tJ\tEMA12\tEMA26\tDIF\tDEA\tMACD\n");
-		if (wiliam1.size()==kdj.size() && kdj.size() == macd.size()) {
+		if (wiliam1.size()==kdj.size() && kdj.size() == ma.size()) {
 	        for(int i=0;i<wiliam1.size();++i){
 				String res = yArrayList.get(i)+"\t"+wiliam1.get(i)+"\t"+wiliam2.get(i)+"\t"+wiliam3.get(i)
-						+"\t"+kdj.get(i)+"\t"+macd.get(i)+"\n";
+						+"\t"+kdj.get(i)+"\t"+ma.get(i)+"\n";
 				String[] y1 = ((String) yArrayList.get(i)).split("\t");
 				if (!y1[0].equals("-1")) {
 					output.write(res);
