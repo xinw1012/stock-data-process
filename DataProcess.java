@@ -54,11 +54,14 @@ public class DataProcess {
 		br = new BufferedReader(new InputStreamReader(new FileInputStream(this.cdir+this.fileName)));
 		String line=null;
 		line = br.readLine();
+		int count=0;
 		while (line != null) {
+			count++;
+			System.out.print(""+count+"\n");
 			String[] cont = line.split("\t");
 			if(cont.length==8 && Double.parseDouble(cont[6])>0 && Double.parseDouble(cont[7]) >= 100 ){
 				/*
-				 * ÓÃ³É½»Á¿ºÍ³É½»½ğ¶îÈ¥³ı´íÎóÊı¾İ
+				 * ç”¨æˆäº¤é‡å’Œæˆäº¤é‡‘é¢å»é™¤é”™è¯¯æ•°æ®
 				 */
 				if (this.content.containsKey(cont[0]) == false) {
 					this.indexArrayList.add(cont[0]);
@@ -74,10 +77,7 @@ public class DataProcess {
 					for (int i = 0; i < 7; ++i) {
 						ArrayList<String> sub = temp.get(i);
 						sub.add(cont[i + 1]);
-						temp.set(i, sub);
 					}
-					this.content.remove(cont[0]);
-					this.content.put(cont[0], temp);
 				}
 				line = br.readLine();
 			} else{
@@ -241,7 +241,8 @@ public class DataProcess {
 						EMA26.add(ema26);
 						DEA.add(dea);
 					}
-					String tem =Double.toString(current)+"\t"+Double.toString(ema12)+"\t"+Double.toString(ema26)+"\t"+Double.toString(dif)+"\t"+Double.toString(dea)+"\t"+Double.toString(macd);
+					String tem =Double.toString(current)+"\t"+Double.toString(ema12)+"\t"+Double.toString(ema26)
+							+"\t"+Double.toString(dif)+"\t"+Double.toString(dea)+"\t"+Double.toString(macd);
 					str.add(tem);
 				}
 			} else{
@@ -313,10 +314,12 @@ public class DataProcess {
 		String pathString = this.cdir+"output_2012_5_0_selected.txt";
 		FileWriter file = new FileWriter(pathString);
         BufferedWriter output = new BufferedWriter(file);
-        //output.write("Y\tStkcd\tIndex\tOpendata\tOpnprc\tHiprc\tLoprc\tClsprc\tDnshrtrd\tDnvaltrd\tWilliamIndex\tRSV\tK\tD\tJ\tEMA12\tEMA26\tDIF\tDEA\tMACD\n");
+        //output.write("Y\tStkcd\tIndex\tOpendata\tOpnprc\tHiprc\tLoprc\tClsprc\tDnshrtrd\tDnvaltrd
+        //\tWilliamIndex\tRSV\tK\tD\tJ\tEMA12\tEMA26\tDIF\tDEA\tMACD\n");
 		if (wiliam1.size()==kdj.size() && kdj.size() == macd.size()) {
 	        for(int i=0;i<wiliam1.size();++i){
-				String res = (String) yArrayList.get(i)+"\t"+(String) wiliam1.get(i)+"\t"+(String) wiliam2.get(i)+"\t"+(String) wiliam3.get(i)+"\t"+(String) kdj.get(i)+(String) macd.get(i)+"\n";
+				String res = yArrayList.get(i)+"\t"+wiliam1.get(i)+"\t"+wiliam2.get(i)+"\t"+wiliam3.get(i)
+						+"\t"+kdj.get(i)+"\t"+macd.get(i)+"\n";
 				String[] y1 = ((String) yArrayList.get(i)).split("\t");
 				if (!y1[0].equals("-1")) {
 					output.write(res);
@@ -347,9 +350,10 @@ public class DataProcess {
 						resString+=contStrings[i];
 						if(i==0){
 							resString+=",";
-						}
-						else if(i<contStrings.length-1){
-							resString+="\t";
+						} else {
+							if(i<contStrings.length-1){
+								resString+="\t";
+							}
 						}
 					}
 				}
@@ -398,7 +402,7 @@ public class DataProcess {
 					}
 					ret+="\n";
 					output.write(ret);
-				}	
+				}
 			}
 			else{
 				System.out.println("records are not enough!");
@@ -408,10 +412,9 @@ public class DataProcess {
 	}
 	
 	public static void main(String[] args) throws IOException{
-		DataProcess hash = new DataProcess("D:\\xinw\\","data_2012.txt","stockindex.txt");
+		DataProcess hash = new DataProcess("/Users/liyingkai/Documents/code/","2012.txt","stockindex.txt");
 		String filePath = hash.getOutput();
 		hash.getTotalOutput(filePath);
 		System.out.println("Finish!");
 	}
 }
-
