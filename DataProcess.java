@@ -341,13 +341,13 @@ public class DataProcess {
 		for(String key:Index){
 			ArrayList<String> listStrings = hashtable.get(key);
 			if(listStrings.size()>=15){
-				for(int i=14;i<listStrings.size();++i){
+				for(int i=9;i<listStrings.size();++i){
 					String[] strings = listStrings.get(i).split(",");
 					String ret = strings[0]+"\t";
-					for(int j=i-14;j<i-4;++j){
+					for(int j=i-9;j<=i;++j){
 						String[] strs = listStrings.get(j).split(",");
 						ret+=strs[1];
-						if(j<i-5){
+						if(j<i){
 							ret+="\t";
 						}
 					}
